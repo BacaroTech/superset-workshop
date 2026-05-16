@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # 1. IL TUO DATABASE APPLICATIVO
+  app-db:
+    image: postgres:15
+    container_name: app_database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${APP_DB_USER}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+      POSTGRES_DB: ${APP_DB_NAME}
+    ports:
+      - "5432:5432" # Esposto per permetterti di collegare DBeaver/DataGrip dal tuo PC
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+      - ./app-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - data-network
+
+  # 2. DATABASE INTERNO DI SUPERSET
+  superset-db:
+    image: postgres:15
+    container_name: superset_database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${SUPERSET_DB_USER}
+      POSTGRES_PASSWORD: ${SUPERSET_DB_PASSWORD}
+      POSTGRES_DB: ${SUPERSET_DB_NAME}
+    volumes:
+      - superset_db_data:/var/lib/postgresql/data
+    networks:
+      - data-network
+
+  # 3. REDIS (Cache per Superset, obbligatorio per performance decenti)
+  superset-redis:
+    image: redis:7
+    container_name: superset_cache
+    restart: unless-stopped
+    volumes:
+      - superset_redis_data:/data
+    networks:
+      - data-network
+
+  # 4. L'APPLICAZIONE SUPERSET
+  superset:
+    build:
+      context: ./superset
+      dockerfile: Dockerfile
+    container_name: superset_app
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    depends_on:
+      - superset-db
+      - superset-redis
+      - app-db
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - SUPERSET_ADMIN_USER=${SUPERSET_ADMIN_USER}
+      - SUPERSET_ADMIN_PASSWORD=${SUPERSET_ADMIN_PASSWORD}
+      # Stringa di connessione di Superset al SUO database (non quello della tua app)
+      - PYTHONPATH=/app/superset_home/.local/lib/python3.10/site-packages:/usr/local/lib/python3.10/site-packages
+      - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://${SUPERSET_DB_USER}:${SUPERSET_DB_PASSWORD}@superset-db:5432/${SUPERSET_DB_NAME}
+      - CACHE_DEFAULT_URL=redis://superset-redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://superset-redis:6379/1
+    command: ["/app/superset-init.sh"] # Esegue lo script che inizializza e avvia l'app
+    volumes:
+      - superset_app_data:/app/superset_home
+    networks:
+      - data-network
+
+# Definizione dei volumi per la persistenza dei dati (se spegni i container i dati non si perdono)
+volumes:
+  app_db_data:
+  superset_db_data:
+  superset_redis_data:
+  superset_app_data:
+
+networks:
+  data-network:
+    driver: bridge
