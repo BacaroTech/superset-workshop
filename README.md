@@ -11,8 +11,9 @@
 3. [Connessione del database a Superset](#connessione-del-database-a-superset)
 4. [Connessione con DBeaver](#connessione-con-dbeaver)
 5. [Obiettivi del workshop](#obiettivi-del-workshop)
-6. [Approfondimenti e follow-up](#approfondimenti-e-follow-up)
-7. [Riferimento rapido credenziali](#riferimento-rapido-credenziali)
+6. [Embedding della dashboard](#embedding-della-dashboard)
+7. [Approfondimenti e follow-up](#approfondimenti-e-follow-up)
+8. [Riferimento rapido credenziali](#riferimento-rapido-credenziali)
 
 ---
 
@@ -21,6 +22,7 @@
 Assicurati di avere installato e in esecuzione sul tuo computer:
 
 - **Docker** (Docker Desktop o Rancher) con **Docker Compose**
+- **Node.js** v20+ — necessario per avviare il backend e il frontend di embedding
 - **DBeaver** — per ispezionare i dati direttamente nel database
 - **Visual Studio Code** — editor consigliato per seguire il workshop
 
@@ -126,19 +128,113 @@ Alla fine di questa sessione sarai in grado di:
 
 ---
 
+## Embedding della dashboard
+
+Questa sezione mostra come incorporare una dashboard Superset all'interno di un'applicazione web reale, usando un **backend Express** che gestisce l'autenticazione e un **frontend React** che visualizza la dashboard in un iframe.
+
+> **Infrastruttura Docker non coinvolta** — BE e FE girano direttamente su Node.js, fuori da Docker Compose.
+
+### Prerequisito: abilitare l'embedding in Superset
+
+Prima di tutto devi abilitare la funzionalità di embedding lato Superset:
+
+1. In Superset, vai su **Settings ⚙️** → **Feature flags**.
+2. Attiva **EMBEDDED_SUPERSET**.
+3. Salva e riavvia Superset se richiesto.
+
+Poi, per ogni dashboard che vuoi incorporare:
+
+1. Apri la dashboard.
+2. Clicca su **⋮** (tre puntini in alto a destra) → **Embed dashboard**.
+3. Copia l'**UUID** che appare — ti servirà nel frontend.
+
+### Avvio del backend (BE)
+
+```bash
+cd be
+npm install
+npm run dev
+```
+
+Il server Express si avvia su `http://localhost:4000`.
+
+**Endpoint disponibili:**
+
+| Metodo | Path            | Descrizione                                        |
+|--------|-----------------|----------------------------------------------------|
+| `POST` | `/embed/token`  | Riceve `{ dashboardId }`, restituisce `{ token }`  |
+| `GET`  | `/health`       | Health check                                       |
+
+### Avvio del frontend (FE)
+
+```bash
+cd fe
+npm install
+npm run dev
+```
+
+L'app React si avvia su `http://localhost:3000`.
+
+### Flusso di embedding
+
+```
+Browser (FE)
+  │
+  │  POST /embed/token  { dashboardId }
+  ▼
+Backend (BE)
+  │
+  │  POST /api/v1/security/login        → access token
+  │  POST /api/v1/security/guest_token/ → guest token
+  ▼
+Superset (Docker)
+  │
+  └─ token restituito al FE
+       │
+       └─ iframe src="localhost:8088/superset/dashboard/<id>?standalone=3&guest_token=<token>"
+```
+
+### Struttura dei file
+
+```
+fe/
+├── index.html
+├── package.json
+├── vite.config.js
+└── src/
+    ├── main.jsx
+    ├── index.css
+    ├── App.jsx
+    ├── App.css
+    └── components/
+        ├── EmbedForm.jsx
+        ├── EmbedForm.css
+        ├── Dashboard.jsx
+        └── Dashboard.css
+
+be/
+├── package.json
+├── .env.example
+└── src/
+    └── index.js
+```
+
+---
+
 ## Approfondimenti e follow-up
 
-Una volta completati gli obiettivi base, puoi esplorare:
-
-- **Embedding delle dashboard** — integrare una dashboard Superset all'interno di un'applicazione web esterna tramite iframe o la Embedded SDK.
 - **Gestione degli accessi con i ruoli** — configurare ruoli e permessi per controllare quali utenti possono vedere o modificare dataset e dashboard.
+- **Row-Level Security (RLS)** — passare regole RLS nel guest token per filtrare i dati per utente.
+- **Refresh automatico del token** — i guest token scadono; in produzione va implementato un meccanismo di rinnovo.
 
 ---
 
 ## Riferimento rapido credenziali
 
-| Servizio             | URL / Host  | Porta | Utente     | Password                      |
-|----------------------|-------------|-------|------------|-------------------------------|
-| Superset (web)       | `localhost` | 8088  | `admin`    | `admin`                       |
-| PostgreSQL (DBeaver) | `localhost` | 5432  | `app_user` | `app_password_super_sicura`   |
-| PostgreSQL (interno Docker) | `app-db` | 5432 | `app_user` | `app_password_super_sicura` |
+| Servizio                    | URL / Host    | Porta | Utente     | Password                     |
+|-----------------------------|---------------|-------|------------|------------------------------|
+| Superset (web)              | `localhost`   | 8088  | `admin`    | `admin`                      |
+| PostgreSQL (DBeaver)        | `localhost`   | 5432  | `app_user` | `app_password_super_sicura`  |
+| PostgreSQL (interno Docker) | `app-db`      | 5432  | `app_user` | `app_password_super_sicura`  |
+| Backend embed               | `localhost`   | 4000  | —          | —                            |
+| Frontend embed              | `localhost`   | 3000  | —          | —                            |

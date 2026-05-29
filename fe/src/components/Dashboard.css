@@ -1,0 +1,38 @@
+.dashboard-wrapper {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.dashboard-bar {
+  align-items: center;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+.dashboard-dot {
+  background: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+  height: 7px;
+  width: 7px;
+}
+
+.dashboard-label {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dashboard-frame {
+  border: none;
+  display: block;
+  height: 70vh;
+  width: 100%;
+  background: #fff;
+}

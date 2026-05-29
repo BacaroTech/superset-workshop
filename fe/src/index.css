@@ -1,0 +1,65 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0e0f11;
+  --surface:   #16181c;
+  --border:    #2a2d35;
+  --accent:    #e8ff47;
+  --accent-dim:#b8cc30;
+  --text:      #d4d7de;
+  --text-muted:#6b7080;
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'IBM Plex Sans', sans-serif;
+  --radius:    4px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+input, button {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 8px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus { border-color: var(--accent); }
+input::placeholder { color: var(--text-muted); }
+
+button {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: #0e0f11;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 8px 18px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+button:hover { background: var(--accent-dim); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+label {
+  color: var(--text-muted);
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
