@@ -29,10 +29,16 @@
   text-transform: uppercase;
 }
 
-.dashboard-frame {
-  border: none;
-  display: block;
+.dashboard-mount {
   height: 70vh;
   width: 100%;
   background: #fff;
+}
+
+/* L'SDK inietta un iframe — forziamo dimensioni corrette */
+.dashboard-mount iframe {
+  border: none;
+  display: block;
+  height: 100%;
+  width: 100%;
 }

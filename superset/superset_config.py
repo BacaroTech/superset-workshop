@@ -2,7 +2,15 @@ FEATURE_FLAGS = {
     "EMBEDDED_SUPERSET": True,
 }
 
-HTTP_HEADERS = {
+ENABLE_CORS = True
+
+CORS_OPTIONS = {
+    "supports_credentials": True,
+    "allow_headers": ["*"],
+    "resources": ["*"],
+    "origins": ["http://localhost:3000"],
+}
+
+OVERRIDE_HTTP_HEADERS = {
     "X-Frame-Options": "ALLOWALL",
-    "Content-Security-Policy": "frame-ancestors 'self' http://localhost:3000",
 }
