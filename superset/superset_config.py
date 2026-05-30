@@ -11,6 +11,10 @@ CORS_OPTIONS = {
     "origins": ["http://localhost:3000"],
 }
 
-OVERRIDE_HTTP_HEADERS = {
-    "X-Frame-Options": "ALLOWALL",
-}
+TALISMAN_ENABLED = False
+
+# Permetti al guest token di accedere alle API necessarie
+GUEST_ROLE_NAME = "Gamma"
+GUEST_TOKEN_JWT_SECRET = "workshop-secret-change-in-prod"
+GUEST_TOKEN_JWT_ALGO = "HS256"
+GUEST_TOKEN_JWT_EXP_SECONDS = 300
